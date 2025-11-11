@@ -43,19 +43,37 @@ async function parseWithGemini(text, author, tz) {
 
   const model = genai.getGenerativeModel({ model: GEMINI_MODEL });
 
-  const prompt = `
-You are an event parser for a family scheduling assistant.
+  const prompt = `You are an event parser for a family scheduling assistant.
+
+CRITICAL RULES:
+1. ONLY extract information EXPLICITLY stated in the user message
+2. NEVER invent, guess, or hallucinate dates, times, or any other information
+3. If the user does NOT mention a date, leave "iso_datetime" as an empty string
+4. If the user does NOT mention a time, leave "iso_datetime" as an empty string
+5. If the user does NOT mention a location, leave "location" as an empty string
+6. If the user does NOT mention a person, leave "person" as an empty string
+
 User message: """${text}"""
 Author: ${author}
-Assume timezone ${tz || "Asia/Singapore"}.
-Return ONLY JSON matching:
+Timezone: ${tz || "Asia/Singapore"}
+
+Extract ONLY what is EXPLICITLY mentioned:
+- If user says "9am" but NO date → "iso_datetime" should be EMPTY
+- If user says "21 Nov" but NO time → "iso_datetime" should have date with time as 00:00:00
+- If user says "surgery" but NO location → "location" should be EMPTY
+
+Return ONLY JSON:
 {
-  "event_name": "string",
-  "iso_datetime": "ISO UTC datetime string",
-  "person": "string",
-  "location": "string"
+  "event_name": "string or empty",
+  "iso_datetime": "ISO UTC datetime string or empty",
+  "person": "string or empty",
+  "location": "string or empty"
 }
-If missing, leave empty strings.
+
+Examples:
+User: "9am" → {"event_name": "", "iso_datetime": "", "person": "", "location": ""}
+User: "21 Nov" → {"event_name": "", "iso_datetime": "2025-11-21T00:00:00Z", "person": "", "location": ""}
+User: "surgery 21 Nov 9am at Solis" → {"event_name": "Surgery", "iso_datetime": "2025-11-21T01:00:00Z", "person": "", "location": "Solis"}
 `;
 
   try {
