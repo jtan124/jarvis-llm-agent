@@ -52,6 +52,11 @@ CRITICAL RULES:
 4. If the user does NOT mention a time, leave "iso_datetime" as an empty string
 5. If the user does NOT mention a location, leave "location" as an empty string
 6. If the user does NOT mention a person, leave "person" as an empty string
+7. Fix obvious typos in location names (e.g., "homr" → "home")
+8. Handle relative dates: "today", "tomorrow", "tonight"
+
+Current date: ${new Date().toISOString().split('T')[0]}
+Today is: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
 User message: """${text}"""
 Author: ${author}
@@ -60,7 +65,11 @@ Timezone: ${tz || "Asia/Singapore"}
 Extract ONLY what is EXPLICITLY mentioned:
 - If user says "9am" but NO date → "iso_datetime" should be EMPTY
 - If user says "21 Nov" but NO time → "iso_datetime" should have date with time as 00:00:00
-- If user says "surgery" but NO location → "location" should be EMPTY
+- If user says "today at 6pm" → parse "today" as current date + 6pm
+- If user says "tomorrow" → use tomorrow's date
+- If user says "tonight" → use today's date + evening time (if specified)
+- If user says "dinner" → "event_name" is "Dinner"
+- If user says "homr" → "location" is "home" (fix typo)
 
 Return ONLY JSON:
 {
@@ -74,6 +83,9 @@ Examples:
 User: "9am" → {"event_name": "", "iso_datetime": "", "person": "", "location": ""}
 User: "21 Nov" → {"event_name": "", "iso_datetime": "2025-11-21T00:00:00Z", "person": "", "location": ""}
 User: "surgery 21 Nov 9am at Solis" → {"event_name": "Surgery", "iso_datetime": "2025-11-21T01:00:00Z", "person": "", "location": "Solis"}
+User: "dinner today at 6pm" → {"event_name": "Dinner", "iso_datetime": "<today's date>T10:00:00Z", "person": "", "location": ""}
+User: "Ben dinner at homr today at 6pm" → {"event_name": "Dinner", "iso_datetime": "<today's date>T10:00:00Z", "person": "Ben", "location": "home"}
+User: "meeting tomorrow" → {"event_name": "Meeting", "iso_datetime": "<tomorrow's date>T00:00:00Z", "person": "", "location": ""}
 `;
 
   try {
