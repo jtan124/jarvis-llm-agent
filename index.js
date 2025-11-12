@@ -51,9 +51,20 @@ CRITICAL RULES:
 3. If the user does NOT mention a date, leave "iso_datetime" as an empty string
 4. If the user does NOT mention a time, leave "iso_datetime" as an empty string
 5. If the user does NOT mention a location, leave "location" as an empty string
-6. If the user does NOT mention a person, leave "person" as an empty string
-7. Fix obvious typos in location names (e.g., "homr" → "home")
-8. Handle relative dates: "today", "tomorrow", "tonight"
+6. Fix obvious typos in location names (e.g., "homr" → "home")
+7. Handle relative dates: "today", "tomorrow", "tonight"
+
+PERSON FIELD RULES:
+- The "person" field represents WHO the event is FOR (the event owner/participant)
+- If user says "I have dinner with Christine" → person is "${author}" (the message sender)
+- If user says "Ben has surgery" → person is "Ben"
+- If user says "Christine's birthday party" → person is "Christine"
+- "with X" means X is a companion, NOT the event owner
+
+EVENT NAME RULES:
+- If user says "I have dinner with Christine" → event_name is "Dinner with Christine"
+- If user says "meeting with John" → event_name is "Meeting with John"
+- Include the companion in the event name for clarity
 
 Current date: ${new Date().toISOString().split('T')[0]}
 Today is: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -85,6 +96,9 @@ User: "21 Nov" → {"event_name": "", "iso_datetime": "2025-11-21T00:00:00Z", "p
 User: "surgery 21 Nov 9am at Solis" → {"event_name": "Surgery", "iso_datetime": "2025-11-21T01:00:00Z", "person": "", "location": "Solis"}
 User: "dinner today at 6pm" → {"event_name": "Dinner", "iso_datetime": "<today's date>T10:00:00Z", "person": "", "location": ""}
 User: "Ben dinner at homr today at 6pm" → {"event_name": "Dinner", "iso_datetime": "<today's date>T10:00:00Z", "person": "Ben", "location": "home"}
+User: "I have dinner with Christine at 25 dec" → {"event_name": "Dinner with Christine", "iso_datetime": "2025-12-25T00:00:00Z", "person": "${author}", "location": ""}
+User: "meeting with John tomorrow at 3pm" → {"event_name": "Meeting with John", "iso_datetime": "<tomorrow's date>T07:00:00Z", "person": "${author}", "location": ""}
+User: "Christine birthday party on 15 Jan" → {"event_name": "Birthday Party", "iso_datetime": "2026-01-15T00:00:00Z", "person": "Christine", "location": ""}
 User: "meeting tomorrow" → {"event_name": "Meeting", "iso_datetime": "<tomorrow's date>T00:00:00Z", "person": "", "location": ""}
 `;
 
